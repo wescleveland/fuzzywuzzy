@@ -30,7 +30,7 @@ from . import fuzz
 from . import utils
 
 
-def extract(query, choices, processor=None, scorer=None, limit=5):
+def extract(query, choices, processor=None, scorer=None, limit=5, force_ascii=False):
     """Select the best match in a list or dictionary of choices.
 
     Find best matches in a list or dictionary of choices, return a
@@ -100,13 +100,13 @@ def extract(query, choices, processor=None, scorer=None, limit=5):
     try:
         # See if choices is a dictionary-like object.
         for key, choice in choices.items():
-            processed = processor(choice)
+            processed = processor(choice, force_ascii=force_ascii)
             score = scorer(query, processed)
             sl.append((choice, score, key))
     except AttributeError:
         # It's a list; just iterate over it.
         for choice in choices:
-            processed = processor(choice)
+            processed = processor(choice, force_ascii=force_ascii)
             score = scorer(query, processed)
             sl.append((choice, score))
 
@@ -114,7 +114,7 @@ def extract(query, choices, processor=None, scorer=None, limit=5):
     return sl[:limit]
 
 
-def extractBests(query, choices, processor=None, scorer=None, score_cutoff=0, limit=5):
+def extractBests(query, choices, processor=None, scorer=None, score_cutoff=0, limit=5, force_ascii=False):
     """Get a list of the best matches to a collection of choices.
 
     Convenience function for getting the choices with best scores.
@@ -133,11 +133,11 @@ def extractBests(query, choices, processor=None, scorer=None, score_cutoff=0, li
 
     Returns: A a list of (match, score) tuples.
     """
-    best_list = extract(query, choices, processor, scorer, limit)
+    best_list = extract(query, choices, processor, scorer, limit, force_ascii=False)
     return list(itertools.takewhile(lambda x: x[1] >= score_cutoff, best_list))
 
 
-def extractOne(query, choices, processor=None, scorer=None, score_cutoff=0):
+def extractOne(query, choices, processor=None, scorer=None, score_cutoff=0, force_ascii=False):
     """Find the single best match above a score in a list of choices.
 
     This is a convenience method which returns the single best choice.
@@ -158,7 +158,7 @@ def extractOne(query, choices, processor=None, scorer=None, score_cutoff=0):
         A tuple containing a single match and its score, if a match
         was found that was above score_cutoff. Otherwise, returns None.
     """
-    best_list = extract(query, choices, processor, scorer, limit=1)
+    best_list = extract(query, choices, processor, scorer, limit=1, force_ascii=force_ascii)
     if len(best_list) > 0 and best_list[0][1] >= score_cutoff:
         return best_list[0]
     return None
